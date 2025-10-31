@@ -1,0 +1,240 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>标准齿轮两组参数对比（用户输入）</title>
+  <style>
+    body {
+      font-family: "Microsoft YaHei", sans-serif;
+      margin: 20px;
+      background-color: #f5f7fa;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 20px;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    .common-params, .gear-group {
+      margin-bottom: 20px;
+      padding: 15px;
+      background-color: #fafafa;
+      border-radius: 8px;
+      border: 1px solid #eee;
+    }
+    .common-params h2, .gear-group h2 {
+      margin-top: 0;
+      color: #34495e;
+      font-size: 1.1em;
+    }
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .input-item {
+      flex: 1;
+      min-width: 160px;
+    }
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: bold;
+      color: #34495e;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      display: block;
+      margin: 10px auto 20px;
+      padding: 10px 25px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .results {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .col {
+      flex: 1;
+      min-width: 300px;
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    .col-header {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #3498db;
+      color: #2c3e50;
+    }
+    .param {
+      display: flex;
+      justify-content: space-between;
+      margin: 4px 0;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>标准齿轮两组参数对比（x = 0）</h1>
+  <div class="container">
+    <!-- 公共参数 -->
+    <div class="common-params">
+      <h2>公共齿轮参数（两组共用）</h2>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="ha_star">齿顶高系数 ha*</label>
+          <input type="number" id="ha_star" value="1.0" step="0.1" required>
+        </div>
+        <div class="input-item">
+          <label for="alpha_deg">压力角 α (°)</label>
+          <input type="number" id="alpha_deg" value="20" step="0.1" required>
+        </div>
+        <div class="input-item">
+          <label for="c_star">径向间隙系数 c*</label>
+          <input type="number" id="c_star" value="0.25" step="0.01" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第一组 -->
+    <div class="gear-group">
+      <h2>第一组齿轮参数</h2>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="m1">模数 m₁ (mm)</label>
+          <input type="number" id="m1" value="20" step="0.1" required>
+        </div>
+        <div class="input-item">
+          <label for="z1">齿数 z₁</label>
+          <input type="number" id="z1" value="10" min="1" required>
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二组 -->
+    <div class="gear-group">
+      <h2>第二组齿轮参数</h2>
+      <div class="input-row">
+        <div class="input-item">
+          <label for="m2">模数 m₂ (mm)</label>
+          <input type="number" id="m2" value="10" step="0.1" required>
+        </div>
+        <div class="input-item">
+          <label for="z2">齿数 z₂</label>
+          <input type="number" id="z2" value="20" min="1" required>
+        </div>
+      </div>
+    </div>
+
+    <button id="calculateBtn">计算两组标准齿轮参数</button>
+
+    <div id="results" class="results" style="display:none;"></div>
+  </div>
+
+  <script>
+    function calcGear(m, ha_star, alpha_deg, c_star, z, x = 0) {
+      const alpha_rad = alpha_deg * Math.PI / 180;
+      const r = 0.5 * m * z;
+      const rb = r * Math.cos(alpha_rad);
+      const ha = (ha_star + x) * m;
+      const hf = (ha_star + c_star - x) * m;
+      const h = ha + hf;
+      const ra = r + ha;
+      const rf = r - hf;
+      const p = Math.PI * m;
+      const s = (Math.PI * m) / 2 + 2 * x * m * Math.tan(alpha_rad);
+      const e = p - s;
+      // 最小变位系数（参考）
+      const z_min = 2 * ha_star / (Math.sin(alpha_rad) ** 2);
+      const x_min = ha_star * (z_min - z) / z_min;
+      return { r, rb, ha, hf, h, ra, rf, p, s, e, x_min };
+    }
+
+    document.getElementById('calculateBtn').addEventListener('click', function() {
+      // 公共参数
+      const ha_star = parseFloat(document.getElementById('ha_star').value);
+      const alpha_deg = parseFloat(document.getElementById('alpha_deg').value);
+      const c_star = parseFloat(document.getElementById('c_star').value);
+
+      // 第一组
+      const m1 = parseFloat(document.getElementById('m1').value);
+      const z1 = parseFloat(document.getElementById('z1').value);
+
+      // 第二组
+      const m2 = parseFloat(document.getElementById('m2').value);
+      const z2 = parseFloat(document.getElementById('z2').value);
+
+      // 验证
+      const allVals = [ha_star, alpha_deg, c_star, m1, z1, m2, z2];
+      if (allVals.some(isNaN)) {
+        alert('请填写所有参数！');
+        return;
+      }
+
+      const x = 0.0; // 标准齿轮
+
+      const gear1 = calcGear(m1, ha_star, alpha_deg, c_star, z1, x);
+      const gear2 = calcGear(m2, ha_star, alpha_deg, c_star, z2, x);
+
+      function formatValue(val) {
+        return val.toFixed(4);
+      }
+
+      // ✅ 修复：正确构造对象数组
+      const cases = [
+        { title: "第一组", m: m1, z: z1, data: gear1 },
+        { title: "第二组", m: m2, z: z2, data: gear2 }
+      ];
+
+      let html = '';
+      cases.forEach(c => {
+        html += `<div class="col">`;
+        html += `<div class="col-header">${c.title}（m=${c.m}, z=${c.z}）</div>`;
+        html += `<div class="param"><span>最小变位系数 x_min</span><span>${formatValue(c.data.x_min)}</span></div>`;
+        html += `<div class="param"><span>分度圆半径 r</span><span>${formatValue(c.data.r)} mm</span></div>`;
+        html += `<div class="param"><span>基圆半径 r_b</span><span>${formatValue(c.data.rb)} mm</span></div>`;
+        html += `<div class="param"><span>齿顶高 h_a</span><span>${formatValue(c.data.ha)} mm</span></div>`;
+        html += `<div class="param"><span>齿根高 h_f</span><span>${formatValue(c.data.hf)} mm</span></div>`;
+        html += `<div class="param"><span>全齿高 h</span><span>${formatValue(c.data.h)} mm</span></div>`;
+        html += `<div class="param"><span>齿顶圆半径 r_a</span><span>${formatValue(c.data.ra)} mm</span></div>`;
+        html += `<div class="param"><span>齿根圆半径 r_f</span><span>${formatValue(c.data.rf)} mm</span></div>`;
+        html += `<div class="param"><span>周节 p</span><span>${formatValue(c.data.p)} mm</span></div>`;
+        html += `<div class="param"><span>分度圆齿厚 s</span><span>${formatValue(c.data.s)} mm</span></div>`;
+        html += `<div class="param"><span>分度圆齿槽宽 e</span><span>${formatValue(c.data.e)} mm</span></div>`;
+        html += `</div>`;
+      });
+
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = html;
+      resultsDiv.style.display = 'flex';
+    });
+  </script>
+</body>
+</html>
